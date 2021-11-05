@@ -87,16 +87,22 @@ class S4cmdLoggingClass:
     self.log = logging.Logger("s4cmd")
     self.log.stream = sys.stderr
     self.log_handler = logging.StreamHandler(self.log.stream)
+    self.file_handler = logging.FileHandler("s4cmd-{}.log".format(datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')))
     self.log.addHandler(self.log_handler)
+    self.log.addHandler(self.file_handler)
 
 
   def configure(self, opt):
     'Configure the logger based on command-line arguments'''
 
     self.log_handler.setFormatter(logging.Formatter('%(message)s', DATETIME_FORMAT))
+    self.file_handler.setFormatter(logging.Formatter('%(message)s', DATETIME_FORMAT))
     if opt.debug:
       self.log.verbosity = 3
       self.log_handler.setFormatter(logging.Formatter(
+          '  (%(levelname).1s)%(filename)s:%(lineno)-4d %(message)s',
+          DATETIME_FORMAT))
+      self.file_handler.setFormatter(logging.Formatter(
           '  (%(levelname).1s)%(filename)s:%(lineno)-4d %(message)s',
           DATETIME_FORMAT))
       self.log.setLevel(logging.DEBUG)
@@ -184,7 +190,8 @@ def fail(message, exc_info=None, status=1, stacktrace=False):
     error(traceback.format_exc())
   clean_tempfiles()
   if __name__ == '__main__':
-    sys.exit(status)
+    # sys.exit(status)
+    error("System.Exit is called.")
   else:
     raise RuntimeError(status)
 
@@ -522,10 +529,12 @@ class ThreadPool(object):
           self.pool.tasks.terminate(e)
           fail('[Invalid Argument] ', exc_info=e)
         except Failure as e:
-          self.pool.tasks.terminate(e)
+          # self.pool.tasks.terminate(e)
+          error("[Runtime Failure] Skipping termination of Exception: " + str(e))
           fail('[Runtime Failure] ', exc_info=e)
         except OSError as e:
-          self.pool.tasks.terminate(e)
+          # self.pool.tasks.terminate(e)
+          error("[OSError] Skipping termination of Exception: " + str(e))
           fail('[OSError] %d: %s' % (e.errno, e.strerror))
         except BotoClient.S3RetryableErrors as e:
           if retry >= self.opt.retry:
@@ -538,7 +547,8 @@ class ThreadPool(object):
           time.sleep(self.opt.retry_delay)
           self.pool.tasks.put((func_name, retry + 1, args, kargs))
         except Exception as e:
-          self.pool.tasks.terminate(e)
+          # self.pool.tasks.terminate(e)
+          error("[Exception] Skipping termination of Exception: " + str(e))
           fail('[Exception] ', exc_info=e)
         finally:
           self.pool.processed()
