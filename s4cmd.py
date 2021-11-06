@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 #
 # Copyright 2012-2018 BloomReach, Inc.
