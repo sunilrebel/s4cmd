@@ -1,5 +1,6 @@
 s4cmd_env/
 test-tmp/
+.idea/
 
 *.py[co]
 

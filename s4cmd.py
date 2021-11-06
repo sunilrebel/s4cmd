@@ -21,8 +21,24 @@
 Super S3 command line tool.
 """
 
-import sys, os, re, optparse, multiprocessing, fnmatch, time, hashlib, errno, pytz
-import logging, traceback, types, threading, random, socket, shlex, datetime, json
+import datetime
+import errno
+import fnmatch
+import hashlib
+import json
+import logging
+import multiprocessing
+import optparse
+import os
+import pytz
+import random
+import re
+import shlex
+import socket
+import sys
+import threading
+import time
+import traceback
 
 IS_PYTHON2 = sys.version_info[0] == 2
 
@@ -1344,6 +1360,11 @@ class ThreadUtil(S3Handler, ThreadPool.Worker):
                            Body=data,
                            Metadata={'md5': md5cache.get_md5(),
                                      'privilege': self.get_file_privilege(source)})
+        if self.opt.deleteOnSuccess:
+          try:
+            os.remove(source)
+          except OSError:
+            pass
         message('%s => %s', source, target)
         return
 
@@ -1366,6 +1387,11 @@ class ThreadUtil(S3Handler, ThreadPool.Worker):
     if mpi.complete({'ETag': response['ETag'], 'PartNumber': part}):
       try:
         self.s3.complete_multipart_upload(Bucket=s3url.bucket, Key=s3url.path, UploadId=mpi.id, MultipartUpload={'Parts': mpi.sorted_parts()})
+        if self.opt.deleteOnSuccess:
+          try:
+            os.remove(source)
+          except OSError:
+            pass
         message('%s => %s', source, target)
       except Exception as e:
         message('Unable to complete upload: %s', str(e))
@@ -1878,6 +1904,9 @@ def main():
           dest='endpoint_url', type='string', default=None)
       parser.add_option(
           '--use-ssl', help='(obsolete) use SSL connection to S3', dest='use_ssl',
+          action='store_true', default=False)
+      parser.add_option(
+          '--deleteOnSuccess', help='delete local file after it is successfully synced', dest='deleteOnSuccess',
           action='store_true', default=False)
       parser.add_option(
           '--verbose', help='verbose output', dest='verbose',
