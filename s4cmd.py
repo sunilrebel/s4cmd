@@ -103,7 +103,7 @@ class S4cmdLoggingClass:
     self.log = logging.Logger("s4cmd")
     self.log.stream = sys.stderr
     self.log_handler = logging.StreamHandler(self.log.stream)
-    self.file_handler = logging.FileHandler("s4cmd-{}.log".format(datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')))
+    self.file_handler = logging.FileHandler("s4cmd-{}.log".format(datetime.datetime.now().strftime('%Y_%m')))
     self.log.addHandler(self.log_handler)
     self.log.addHandler(self.file_handler)
 
